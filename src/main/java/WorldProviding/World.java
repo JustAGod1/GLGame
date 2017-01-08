@@ -9,10 +9,10 @@ import Gui.MouseHandler;
 import Objects.HUDElement;
 import Vectors.BlockPos;
 import Vectors.Vector2;
-import com.jogamp.newt.event.MouseListener;
-
-import java.awt.event.MouseEvent;
 import java.util.*;
+import Objects.Entity;
+
+import static Rendering.WorldRenderer.GL20;
 
 /**
  * Создано Юрием в 31.12.16.
@@ -26,6 +26,9 @@ public class World implements Iterable<BlockWrapper> {
     public static final int CHUNK_SIZE = 20;
     private HashMap<BlockPos, Chunk> chunks = new HashMap<>();
     public ArrayList<HUDElement> hudElements = new ArrayList<>();
+    private ArrayList<Entity> entities = new ArrayList<>();
+    private ArrayList<Entity> updatableEntities = new ArrayList<>();
+    private Thread thread;
 
     private static World instance;
 
@@ -41,6 +44,9 @@ public class World implements Iterable<BlockWrapper> {
     public World() {
 
         GameGL.window.addMouseListener(new MouseHandler());
+
+        thread = new Thread(this::loop);
+        thread.start();
     }
 
 
@@ -103,6 +109,39 @@ public class World implements Iterable<BlockWrapper> {
         y *= -1;
 
         return new Vector2(x, y);
+    }
+
+    public void addEntity(Entity entity) {
+        entities.add(entity);
+        if (entity.isUpdatable()) updatableEntities.add(entity);
+    }
+
+    private void loop() {
+        for (Entity entity : updatableEntities) {
+            entity.updateEntity();
+        }
+
+        try {
+            Thread.sleep(1000 / 20);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void onDraw() {
+        for (Map.Entry<BlockPos, Chunk> entry : chunks.entrySet()) {
+            GL20.glPushMatrix();
+            {
+                float x = entry.getKey().getX();
+                float y = entry.getKey().getY();
+                GL20.glTranslated((x / 2.0) * CHUNK_SIZE * 0.1, (y / 2.0) * CHUNK_SIZE * 0.1, 0);
+                entry.getValue().onDraw(GL20);
+            }
+            GL20.glPopMatrix();
+        }
+        for (Entity entity : entities) {
+            entity.onDraw();
+        }
     }
 
     private class WorldIterator implements Iterator<BlockWrapper> {

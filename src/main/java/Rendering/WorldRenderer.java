@@ -16,8 +16,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import static Game.GameGL.window;
-import static com.jogamp.opengl.GL.GL_BLEND;
-import static com.jogamp.opengl.GL.GL_DEPTH_TEST;
+import static com.jogamp.opengl.GL.*;
 import static com.jogamp.opengl.fixedfunc.GLMatrixFunc.GL_MODELVIEW;
 import static com.jogamp.opengl.fixedfunc.GLMatrixFunc.GL_PROJECTION;
 
@@ -55,6 +54,8 @@ public class WorldRenderer implements GLEventListener {
         glu = GLU.createGLU(GL20);
         GL20.glEnable(GL_BLEND);
         GL20.glEnable(GL_DEPTH_TEST);
+        GL20.glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+
         //System.out.println(glAutoDrawable);
         //camera.setCamera();
 
@@ -70,29 +71,22 @@ public class WorldRenderer implements GLEventListener {
         GL20 = glAutoDrawable.getGL().getGL2();
 
         GL20.glClear(GL2.GL_COLOR_BUFFER_BIT |  GL2.GL_DEPTH_BUFFER_BIT);
-        Iterator<Map.Entry<BlockPos, Chunk>> iterator = World.getInstance().getChunksSet().iterator();
+
 
 
         //GL20.glLoadIdentity();
 
         GL20.glPushMatrix();
-        while (iterator.hasNext()) {
-            GL20.glPushMatrix();
-            Map.Entry<BlockPos, Chunk> e = iterator.next();
-
-            Teselator te = Teselator.instance;
-            te.translate(e.getKey().getX() * World.CHUNK_SIZE * 0.1f, e.getKey().getY() * World.CHUNK_SIZE * 0.1f);
-
-
-            e.getValue().onDraw(GL20);
-            GL20.glPopMatrix();
+        {
+            World.getInstance().onDraw();
         }
         GL20.glPopMatrix();
 
-
-
-        PlayerEntity.getInstance().onDraw();
-
+        GL20.glPushMatrix();
+        {
+            PlayerEntity.getInstance().onDraw();
+        }
+        GL20.glPopMatrix();
 
 
 

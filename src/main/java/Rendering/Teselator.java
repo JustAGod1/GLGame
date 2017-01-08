@@ -32,10 +32,23 @@ public class Teselator {
 
     private Vector2 translationBeforeDraw;
 
-    private Teselator() {}
+    private Teselator() {
+    }
 
     public void bindTexture(String res) {
+        bindTexture(createTexture(res));
+    }
 
+    public void bindTexture(Texture texture) {
+
+        texture.enable(GL20);
+        texture.bind(GL20);
+
+        currentTexture = texture;
+
+    }
+
+    public Texture createTexture(String res) {
         if (currentTexture != null) {
             currentTexture.disable(GL20);
         }
@@ -44,11 +57,8 @@ public class Teselator {
             currentTexture.disable(GL20);
 
             Texture texture = loadedTextures.get(res);
-            texture.enable(GL20);
-            texture.bind(GL20);
 
-            currentTexture = texture;
-            return;
+            return texture;
         }
 
         ClassLoader loader = this.getClass().getClassLoader();
@@ -66,15 +76,10 @@ public class Teselator {
             e.printStackTrace();
         }
 
-        texture.enable(GL20);
-        texture.bind(GL20);
-
-        currentTexture = texture;
 
         loadedTextures.put(res, texture);
 
-
-
+        return texture;
     }
 
     public void translate(float x, float y) {
@@ -112,8 +117,6 @@ public class Teselator {
         double tmpU = u;
         u = 1 - v;
         v = 1 - tmpU;
-
-
 
 
         GL20.glTexCoord2d(u, v);

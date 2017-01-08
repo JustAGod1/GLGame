@@ -16,4 +16,9 @@ public class Vector2 {
     public Vector2 clone() {
         return new Vector2(x, y);
     }
+
+    public void add(Vector2 direction) {
+        x += direction.x;
+        y += direction.y;
+    }
 }

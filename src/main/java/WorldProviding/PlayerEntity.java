@@ -4,11 +4,7 @@ import Rendering.Teselator;
 import Vectors.Vector2;
 
 import static Rendering.WorldRenderer.GL20;
-import static com.jogamp.opengl.GL.GL_DEPTH_TEST;
-import static com.jogamp.opengl.GL.GL_LINES;
-import static java.lang.Math.cos;
-import static java.lang.Math.sin;
-import static java.lang.Math.toRadians;
+import static java.lang.Math.*;
 
 /**
  * Created by Yuri on 05.01.17.
@@ -19,9 +15,6 @@ public class PlayerEntity {
     private Vector2 position = new Vector2(0, 0);
     private float rotation = 0.0f;
 
-    public static PlayerEntity getInstance() {
-        return instance;
-    }
 
 
     public void moveForward(float distance) {
@@ -60,8 +53,6 @@ public class PlayerEntity {
         Teselator te = Teselator.instance;
 
 
-
-
         GL20.glColor3f(0, 1, 0);
 
 
@@ -75,36 +66,23 @@ public class PlayerEntity {
         GL20.glPushMatrix();
         {
             te.translate(position.x, position.y);
-            te.startDrawing(GL_LINES);
-            {
 
-                te.add3DVertex(0, 0, -0.2);
-                te.add3DVertex(x, y, -0.2);
+
+            GL20.glRotated(Math.abs(rotation % 360) + 180, 0, 0, 4);
+            GL20.glColor3f(1, 1, 1);
+            te.bindTexture("tank.png");
+            te.startDrawingQuads();
+            {
+                te.add3DVertexWithUV(-0.05f, -0.05f, -0.1f, 0, 1);
+                te.add3DVertexWithUV(0.05f, -0.05f, -0.1f, 1, 1);
+                te.add3DVertexWithUV(0.05f, 0.05f, -0.1f, 1, 0);
+                te.add3DVertexWithUV(-0.05f, 0.05f, -0.1f, 0, 0);
             }
             te.draw();
 
-
-            GL20.glPushMatrix();
-            {
-
-                GL20.glRotated(Math.abs(rotation % 360) + 270, 0, 0, 4);
-                GL20.glColor3f(1, 1, 1);
-                te.bindTexture("tank.png");
-                te.startDrawingQuads();
-                {
-                    te.add3DVertexWithUV(-0.05f, -0.05f, -0.1f, 0, 1);
-                    te.add3DVertexWithUV(0.05f, -0.05f, -0.1f, 1, 1);
-                    te.add3DVertexWithUV(0.05f, 0.1f, -0.1f, 1, 0);
-                    te.add3DVertexWithUV(-0.05f, 0.1f, -0.1f, 0, 0);
-                }
-                te.draw();
-
-                GL20.glColor3f(1, 0, 0);
+            GL20.glColor3f(1, 0, 0);
 
 
-            }
-            //this.rotateToRight(0.1f);
-            GL20.glPopMatrix();
         }
         GL20.glPopMatrix();
     }

@@ -1,26 +1,34 @@
-package Gui;
+package Objects;
+
 
 import WorldProviding.PlayerEntity;
 import com.jogamp.newt.event.KeyEvent;
 import com.jogamp.newt.event.KeyListener;
 
-import java.util.*;
-
+import java.util.ConcurrentModificationException;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 /**
- * Created by Yuri on 05.01.17.
+ * Created by Yuri on 08.01.17.
  */
-public class KeyboardHandler implements KeyListener {
+public class PlayerAI extends AI implements KeyListener{
 
+    private PlayerEntity player;
     private Set<Key> typedKeys = new HashSet<>();
     private Thread thread;
-    private boolean mutex = false;
 
-    public KeyboardHandler() {
+    @Override
+    public void update() {
+
+    }
+
+    public PlayerAI() {
         thread = new Thread(this::loop);
-        thread.setName("Keyboard Handler Thread");
+        thread.setName("Player AI Thread");
         thread.start();
-        //thread.setDaemon(true);
+        thread.setDaemon(true);
     }
 
     @Override

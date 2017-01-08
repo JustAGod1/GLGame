@@ -53,8 +53,6 @@ public class Chunk implements Iterable<BlockWrapper> {
         float x = -1;
         float y = -1f;
 
-        //GL20.glMatrixMode(GL_MODELVIEW);
-
 
         for (int i = 0; i < World.CHUNK_SIZE; i++) {
             for (int j = 0; j < World.CHUNK_SIZE; j++) {
