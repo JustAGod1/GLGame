@@ -1,15 +1,14 @@
 package Game;
 
-import Gui.KeyboardHandler;
-import Gui.MainGUI;
+import Objects.HUD;
+import Objects.PlayerAI;
+import Objects.Shell;
 import Rendering.WorldRenderer;
-import com.jogamp.newt.awt.NewtCanvasAWT;
+import WorldProviding.TankEntity;
+import WorldProviding.World;
 import com.jogamp.newt.opengl.GLWindow;
-import com.jogamp.newt.swt.NewtCanvasSWT;
 import com.jogamp.opengl.GLCapabilities;
 import com.jogamp.opengl.GLProfile;
-import com.jogamp.opengl.awt.GLCanvas;
-
 
 
 /**
@@ -18,16 +17,24 @@ import com.jogamp.opengl.awt.GLCanvas;
 public class GameGL {
 
     public static GLWindow window;
+    public static TankEntity player;
 
 
     public static void main(String[] args) throws InterruptedException {
 
 
+        World.generateNewWorld();
         window = GLWindow.create(new GLCapabilities(GLProfile.getDefault()));
 
         window.addGLEventListener(WorldRenderer.getInstance());
+        window.setSize(900, 900);
         window.setVisible(true);
-        window.addKeyListener(new KeyboardHandler());
+
+        HUD.instance.addShell(Shell.class);
+
+
+
+        World.getInstance().addEntity(player = new TankEntity().setAI(new PlayerAI()));
 
 
         while (true) {

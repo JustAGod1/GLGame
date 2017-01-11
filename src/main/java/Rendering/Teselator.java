@@ -1,20 +1,17 @@
 package Rendering;
 
-import Vectors.Vector2;
 import Vectors.Vector3;
-import com.jogamp.opengl.GL;
-import com.jogamp.opengl.GL2;
-import com.jogamp.opengl.GL4;
 import com.jogamp.opengl.util.texture.Texture;
+import com.jogamp.opengl.util.texture.TextureData;
 import com.jogamp.opengl.util.texture.TextureIO;
 
-import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
 import static Rendering.WorldRenderer.GL20;
+import static Rendering.WorldRenderer.drawable;
 import static com.jogamp.opengl.GL2GL3.GL_QUADS;
 
 /**
@@ -28,9 +25,10 @@ public class Teselator {
 
     private Texture currentTexture = null;
 
-    private Vector2 currentTranslation = new Vector2(0, 0);
+    private Vector3 currentTranslation = new Vector3(0, 0, 0);
 
-    private Vector2 translationBeforeDraw;
+
+    private boolean drawing;
 
     private Teselator() {
     }
@@ -49,9 +47,9 @@ public class Teselator {
     }
 
     public Texture createTexture(String res) {
-        if (currentTexture != null) {
-            currentTexture.disable(GL20);
-        }
+
+
+
 
         if (loadedTextures.containsKey(res)) {
             currentTexture.disable(GL20);
@@ -67,10 +65,12 @@ public class Teselator {
         InputStream input = loader.getResourceAsStream(res);
         //System.out.println(input.read());
 
+        TextureData textureData = null;
         Texture texture = null;
         try {
 
-            texture = TextureIO.newTexture(input, true, "png");
+            textureData = TextureIO.newTextureData(drawable.getGLProfile(), input, false, "png");
+            texture = TextureIO.newTexture(GL20, textureData);
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -82,17 +82,22 @@ public class Teselator {
         return texture;
     }
 
-    public void translate(float x, float y) {
-        currentTranslation.x += x;
-        currentTranslation.y += y;
-
-        GL20.glTranslatef(x, y, 0);
+    public void translate2D(float x, float y) {
+        translate3D(x, y, 0);
     }
 
-    public void setTranslation(float x, float y) {
-        translate(-currentTranslation.x, -currentTranslation.y);
+    public void translate3D(float x, float y, float z) {
+        currentTranslation.x += x;
+        currentTranslation.y += y;
+        currentTranslation.z += z;
 
-        translate(x, y);
+        GL20.glTranslatef(x, y, z);
+    }
+
+    public void setTranslation(float x, float y, float z) {
+        translate3D(-currentTranslation.x, -currentTranslation.y, -currentTranslation.z);
+
+        translate3D(x, y, z);
     }
 
     public void startDrawingQuads() {
@@ -100,8 +105,12 @@ public class Teselator {
     }
 
     public void startDrawing(int mode) {
+        if (drawing) {
+            throw new RuntimeException("Рисование еще не закончено");
+        }
         GL20.glBegin(mode);
-        translationBeforeDraw = currentTranslation.clone();
+        drawing = true;
+
     }
 
     public void add2DVertexWithUV(float x, float y, float u, float v) {
@@ -124,10 +133,12 @@ public class Teselator {
 
 
     public void draw() {
+        if (!drawing) throw new RuntimeException("Рисование еще не начато");
+        drawing = false;
         GL20.glEnd();
 
-        setTranslation(translationBeforeDraw.x, translationBeforeDraw.y);
-        translationBeforeDraw = null;
+
+
     }
 
     public void add3DVertex(double x, double y, double z) {
@@ -143,5 +154,11 @@ public class Teselator {
         UV(u, v);
         add3DVertex(x, y, z);
 
+    }
+
+    public void disableTexture() {
+        if (currentTexture != null) {
+            currentTexture.disable(GL20);
+        }
     }
 }

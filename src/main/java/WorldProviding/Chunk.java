@@ -10,6 +10,7 @@ import com.jogamp.opengl.fixedfunc.GLMatrixFunc;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 import static Rendering.WorldRenderer.GL20;
 import static com.jogamp.opengl.fixedfunc.GLMatrixFunc.GL_MODELVIEW;
@@ -47,6 +48,18 @@ public class Chunk implements Iterable<BlockWrapper> {
 
     public void onDraw(GL2 gl) {
         drawBackground();
+
+        for (Map.Entry<BlockPos, BlockWrapper> entry : blocks.entrySet()) {
+            BlockWrapper block = entry.getValue();
+            BlockPos pos = entry.getKey();
+
+            GL20.glPushMatrix();
+            {
+                //GL20.glTranslated(-1 * (World.CHUNK_SIZE / 2) * 0.1, -1 * (World.CHUNK_SIZE / 2) * 0.1, 0);
+                block.drawAt((float) (pos.getX() / 10.0), (float) (pos.getY() / 10.0), GL20);
+            }
+            GL20.glPopMatrix();
+        }
     }
 
     private void drawBackground() {
@@ -100,4 +113,13 @@ public class Chunk implements Iterable<BlockWrapper> {
 
     }
 
+    public BlockWrapper getBlockByPos(BlockPos pos) {
+        pos = pos.convertToChunkPos();
+
+        return blocks.get(pos);
+    }
+
+    public void destroyBlock(BlockPos pos) {
+        blocks.remove(pos.convertToChunkPos());
+    }
 }

@@ -12,5 +12,7 @@ package Blocks;
 
 public class Block {
 
-
+    public int getHardness() {
+        return 0;
+    }
 }

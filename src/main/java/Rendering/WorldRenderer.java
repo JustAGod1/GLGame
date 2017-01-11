@@ -1,19 +1,13 @@
 package Rendering;
 
-import Gui.Debug;
-import Vectors.BlockPos;
+import Objects.HUD;
 import Vectors.Vector3;
-import WorldProviding.Chunk;
-import WorldProviding.PlayerEntity;
 import WorldProviding.World;
 import com.jogamp.opengl.GL2;
 import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.GLEventListener;
 import com.jogamp.opengl.glu.GLU;
 import com.jogamp.opengl.util.FPSAnimator;
-
-import java.util.Iterator;
-import java.util.Map;
 
 import static Game.GameGL.window;
 import static com.jogamp.opengl.GL.*;
@@ -28,8 +22,10 @@ public class WorldRenderer implements GLEventListener {
     private static WorldRenderer instance = new WorldRenderer();
 
     public static GL2 GL20;
+    public static GLAutoDrawable drawable;
     public CameraMan camera = new CameraMan();
     private GLU glu;
+
 
 
     public static WorldRenderer getInstance() {
@@ -37,7 +33,7 @@ public class WorldRenderer implements GLEventListener {
     }
 
     private WorldRenderer() {
-        World.generateNewWorld();
+
 
     }
 
@@ -47,15 +43,16 @@ public class WorldRenderer implements GLEventListener {
     @Override
     public void init(GLAutoDrawable glAutoDrawable) {
         GL20 = glAutoDrawable.getGL().getGL2();
-        FPSAnimator animator = new FPSAnimator(glAutoDrawable, 1000);
+        FPSAnimator animator = new FPSAnimator(glAutoDrawable, 200, true);
         animator.start();
+        animator.setIgnoreExceptions(true);
 
         //Debug.start();
         glu = GLU.createGLU(GL20);
         GL20.glEnable(GL_BLEND);
         GL20.glEnable(GL_DEPTH_TEST);
         GL20.glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
-
+        GL20.glClearColor(1, 0, 0, 1);
         //System.out.println(glAutoDrawable);
         //camera.setCamera();
 
@@ -69,8 +66,10 @@ public class WorldRenderer implements GLEventListener {
     @Override
     public void display(GLAutoDrawable glAutoDrawable) {
         GL20 = glAutoDrawable.getGL().getGL2();
+        drawable = glAutoDrawable;
 
-        GL20.glClear(GL2.GL_COLOR_BUFFER_BIT |  GL2.GL_DEPTH_BUFFER_BIT);
+
+        GL20.glClear(GL2.GL_COLOR_BUFFER_BIT |  GL2.GL_DEPTH_BUFFER_BIT | GL2.GL_STENCIL_BUFFER_BIT);
 
 
 
@@ -78,13 +77,20 @@ public class WorldRenderer implements GLEventListener {
 
         GL20.glPushMatrix();
         {
-            World.getInstance().onDraw();
+            GL20.glTranslated(0, 0.05, 0);
+
+
+            GL20.glPushMatrix();
+            {
+                GL20.glScaled(1, 0.95, 1);
+                World.getInstance().onDraw();
+            }
+            GL20.glPopMatrix();
         }
         GL20.glPopMatrix();
-
         GL20.glPushMatrix();
         {
-            PlayerEntity.getInstance().onDraw();
+            HUD.instance.onDraw();
         }
         GL20.glPopMatrix();
 

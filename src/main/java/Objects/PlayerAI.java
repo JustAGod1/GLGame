@@ -1,7 +1,8 @@
 package Objects;
 
 
-import WorldProviding.PlayerEntity;
+import Game.GameGL;
+import WorldProviding.TankEntity;
 import com.jogamp.newt.event.KeyEvent;
 import com.jogamp.newt.event.KeyListener;
 
@@ -13,22 +14,31 @@ import java.util.Set;
 /**
  * Created by Yuri on 08.01.17.
  */
-public class PlayerAI extends AI implements KeyListener{
+public class PlayerAI extends TankAI implements KeyListener{
 
-    private PlayerEntity player;
+    private TankEntity player;
     private Set<Key> typedKeys = new HashSet<>();
-    private Thread thread;
 
     @Override
     public void update() {
+        Iterator<Key> iterator = typedKeys.iterator();
+
+
+        try {
+            for (Key key : typedKeys) {
+                processKey(key);
+            }
+        } catch (ConcurrentModificationException ignored) {}
+
 
     }
 
     public PlayerAI() {
-        thread = new Thread(this::loop);
-        thread.setName("Player AI Thread");
-        thread.start();
-        thread.setDaemon(true);
+        GameGL.window.addKeyListener(this);
+    }
+
+    public void setPlayer(TankEntity player) {
+        this.player = player;
     }
 
     @Override
@@ -51,7 +61,14 @@ public class PlayerAI extends AI implements KeyListener{
             case 152: {
                 typedKeys.add(Key.KEY_DOWN);
                 break;
-
+            }
+            case 32: {
+                typedKeys.add(Key.SPACE_BAR);
+                break;
+            }
+            case 5: {
+                typedKeys.add(Key.TAB);
+                break;
             }
         }
 
@@ -76,53 +93,49 @@ public class PlayerAI extends AI implements KeyListener{
             }
             case 152: {
                 typedKeys.remove(Key.KEY_DOWN);
-
+                break;
+            }
+            case 32: {
+                typedKeys.remove(Key.SPACE_BAR);
+                break;
+            }
+            case 5: {
+                typedKeys.remove(Key.TAB);
                 break;
             }
         }
 
-    }
-
-    private void loop() {
-
-        while (true) {
-            Iterator<Key> iterator = typedKeys.iterator();
-
-            try {
-                for (Key key : typedKeys) {
-                    processKey(key);
-                }
-                Thread.sleep(10);
-            } catch (ConcurrentModificationException e) {
-
-            } catch (InterruptedException e) {
-
-            }
-
-        }
     }
 
     private void processKey(Key key) {
+        if (player == null) return;
         switch (key) {
             case KEY_DOWN: {
-                PlayerEntity.getInstance().moveBackwards(0.0009f);
+                player.moveBackwards(0.01f);
                 break;
             }
             case KEY_LEFT: {
-                PlayerEntity.getInstance().rotateToLeft(0.5f);
+                player.moveLeft(0.01f);
                 break;
             }
             case KEY_RIGHT: {
-                PlayerEntity.getInstance().rotateToRight(0.5f);
+                player.moveRight(0.01f);
                 break;
             }
             case KEY_UP: {
-                PlayerEntity.getInstance().moveForward(0.0009f);
+                player.moveForward(0.01f);
                 break;
+            }
+            case SPACE_BAR: {
+                player.shoot();
+                break;
+            }
+            case TAB: {
+
             }
         }
 
     }
 
-    private enum Key {KEY_LEFT, KEY_RIGHT, KEY_UP, KEY_DOWN}
+    private enum Key {KEY_LEFT, KEY_RIGHT, KEY_UP, KEY_DOWN, TAB, SPACE_BAR}
 }

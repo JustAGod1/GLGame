@@ -35,7 +35,7 @@ public class World implements Iterable<BlockWrapper> {
     public static void generateNewWorld() {
         Random random = new Random();
         instance = new World();
-        for (int i = 0; i < 400; i++) {
+        for (int i = 0; i < 555; i++) {
             BlockPos pos = new BlockPos(random.nextInt(20) - 10, random.nextInt(20) - 10);
             instance.setBlock(pos, Blocks.stone);
         }
@@ -43,7 +43,6 @@ public class World implements Iterable<BlockWrapper> {
 
     public World() {
 
-        GameGL.window.addMouseListener(new MouseHandler());
 
         thread = new Thread(this::loop);
         thread.start();
@@ -69,8 +68,8 @@ public class World implements Iterable<BlockWrapper> {
         int x = pos.getX();
         int y = pos.getY();
 
-        x = x / (CHUNK_SIZE + 1);
-        y = y / (CHUNK_SIZE + 1);
+        x = x / (CHUNK_SIZE);
+        y = y / (CHUNK_SIZE);
 
         pos = new BlockPos(x, y);
 
@@ -116,19 +115,52 @@ public class World implements Iterable<BlockWrapper> {
         if (entity.isUpdatable()) updatableEntities.add(entity);
     }
 
-    private void loop() {
-        for (Entity entity : updatableEntities) {
-            entity.updateEntity();
-        }
+    public boolean hasBlockAtPos(BlockPos pos) {
+        return getBlockByPos(pos) != null;
+    }
 
-        try {
-            Thread.sleep(1000 / 20);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+    public boolean hasBlockAtPos(Vector2 pos) {
+
+
+        for (BlockWrapper block : this) {
+            if (block.isVectorInBounds(pos)) return true;
+        }
+        return false;
+    }
+
+    public BlockWrapper getBlockByPos(BlockPos pos) {
+        Chunk chunk = getChunkByBlockPos(pos);
+
+        return chunk.getBlockByPos(pos);
+    }
+
+    public BlockWrapper getBlockByPos(Vector2 pos) {
+
+        for (BlockWrapper block : this) {
+            if (block.isVectorInBounds(pos)) return block;
+        }
+        return null;
+    }
+
+    private void loop() {
+        while (true) {
+            try {
+            for (Entity entity : updatableEntities) {
+                entity.updateEntity();
+            }
+
+
+                Thread.sleep(1000 / 20);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ConcurrentModificationException ignored) {
+
+            }
         }
     }
 
     public void onDraw() {
+
         for (Map.Entry<BlockPos, Chunk> entry : chunks.entrySet()) {
             GL20.glPushMatrix();
             {
@@ -136,12 +168,26 @@ public class World implements Iterable<BlockWrapper> {
                 float y = entry.getKey().getY();
                 GL20.glTranslated((x / 2.0) * CHUNK_SIZE * 0.1, (y / 2.0) * CHUNK_SIZE * 0.1, 0);
                 entry.getValue().onDraw(GL20);
+                GL20.glTranslated((x / 2.0) * CHUNK_SIZE * -0.1, (y / 2.0) * CHUNK_SIZE * -0.1, 0);
             }
             GL20.glPopMatrix();
         }
         for (Entity entity : entities) {
-            entity.onDraw();
+            GL20.glPushMatrix();
+            {
+                entity.onDraw();
+            }
+            GL20.glPopMatrix();
         }
+    }
+
+    public void removeEntity(Entity entity) {
+        entities.remove(entity);
+        updatableEntities.remove(entity);
+    }
+
+    public void destroyBlock(BlockPos pos) {
+        getChunkByBlockPos(pos).destroyBlock(pos);
     }
 
     private class WorldIterator implements Iterator<BlockWrapper> {

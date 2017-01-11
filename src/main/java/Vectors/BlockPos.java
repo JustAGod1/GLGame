@@ -45,4 +45,19 @@ public class BlockPos {
     public String toString() {
         return String.format("[x: %d; y: %d]", (int) position.x, (int) position.y);
     }
+
+    @Override
+    public int hashCode() {
+        return (int) (position.x * 10 + position.y);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) return true;
+        if (obj instanceof BlockPos) {
+            return ((BlockPos) obj).position.equals(position);
+        } else {
+            return false;
+        }
+    }
 }
