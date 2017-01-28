@@ -1,6 +1,6 @@
 package Rendering;
 
-import Objects.HUD;
+import Entities.HUD;
 import Vectors.Vector3;
 import WorldProviding.World;
 import com.jogamp.opengl.GL2;
@@ -19,33 +19,28 @@ import static com.jogamp.opengl.fixedfunc.GLMatrixFunc.GL_PROJECTION;
  */
 public class WorldRenderer implements GLEventListener {
 
-    private static WorldRenderer instance = new WorldRenderer();
-
     public static GL2 GL20;
     public static GLAutoDrawable drawable;
+    private static WorldRenderer instance = new WorldRenderer();
     public CameraMan camera = new CameraMan();
     private GLU glu;
 
-
-
-    public static WorldRenderer getInstance() {
-        return instance;
-    }
 
     private WorldRenderer() {
 
 
     }
 
-
-
+    public static WorldRenderer getInstance() {
+        return instance;
+    }
 
     @Override
     public void init(GLAutoDrawable glAutoDrawable) {
         GL20 = glAutoDrawable.getGL().getGL2();
         FPSAnimator animator = new FPSAnimator(glAutoDrawable, 200, true);
         animator.start();
-        animator.setIgnoreExceptions(true);
+
 
         //Debug.start();
         glu = GLU.createGLU(GL20);
@@ -115,11 +110,10 @@ public class WorldRenderer implements GLEventListener {
 
     public class CameraMan {
 
-        private double step = 0.5;
-
         public Vector3 pos;
         public Vector3 dir;
         public Vector3 up;
+        private double step = 0.5;
 
         public CameraMan() {
             pos = new Vector3(0,0,-0.1f);

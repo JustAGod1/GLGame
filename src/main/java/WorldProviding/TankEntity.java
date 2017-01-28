@@ -1,10 +1,13 @@
 package WorldProviding;
 
-import Objects.Entity;
-import Objects.PlayerAI;
-import Objects.Shell;
+import Entities.Entity;
+import Entities.Shells.Shell;
+import Entities.Shells.ShellWrapper;
+import Entities.TankAI;
 import Rendering.Teselator;
 import Vectors.Vector2;
+
+import java.util.HashSet;
 
 import static Rendering.WorldRenderer.GL20;
 
@@ -14,11 +17,15 @@ import static Rendering.WorldRenderer.GL20;
 public class TankEntity extends Entity {
 
 
-    private static final int SHOOT_DELAY = (int) (5);
     private int timeToNextShoot = 0;
     private Vector2 position = new Vector2(0.05f, 0.05f);
     private Direction direction = Direction.UP;
-    private PlayerAI ai;
+    private TankAI ai;
+    private Shell shell = new Shell();
+
+    private float shootDelayModifier = 1;
+    private int shootDelayModifierTime = 0;
+    private int health = 20;
 
 
     public boolean moveForward(float distance) {
@@ -31,6 +38,7 @@ public class TankEntity extends Entity {
 
         for (float i = 0; i < distance; i += 0.0001) {
             position.y += distance / (distance / 0.0001);
+            processMove();
         }
         return true;
     }
@@ -46,6 +54,7 @@ public class TankEntity extends Entity {
 
         for (float i = 0; i < distance; i += 0.0001) {
             position.y -= distance / (distance / 0.0001);
+            processMove();
         }
         return true;
     }
@@ -60,6 +69,7 @@ public class TankEntity extends Entity {
 
         for (float i = 0; i < distance; i += 0.0001) {
             position.x -= distance / (distance / 0.0001);
+            processMove();
         }
         return true;
     }
@@ -74,6 +84,7 @@ public class TankEntity extends Entity {
 
         for (float i = 0; i < distance; i += 0.0001) {
             position.x += distance / (distance / 0.0001);
+            processMove();
         }
         return true;
     }
@@ -146,12 +157,76 @@ public class TankEntity extends Entity {
         return !(w.hasBlockAtPos(pos1) || w.hasBlockAtPos(pos2)) && !(pos1.x - 0.01 > 1 || pos1.x + 0.01 < -1 || pos1.y - 0.01 > 1 || pos1.y + 0.01< -1 || pos2.x - 0.01 > 1 || pos2.x + 0.01 < -1 || pos2.y - 0.01> 1 || pos2.y + 0.01 < -1);
     }
 
+    public void setShell(Shell shell) {
+
+        this.shell = shell;
+    }
+
+    public HashSet<Effect> getEffectsList() {
+        HashSet<Effect> res = new HashSet<>();
+
+        if (shootDelayModifierTime > 0)
+            res.add(Effect.SHOOT_SPEED_UP);
+
+        return res;
+    }
+
+    public void addEffect(Effect effect, float value, int time) {
+        switch (effect) {
+            case SHOOT_SPEED_UP: {
+                setShootDelayModifier(value, time);
+                break;
+            }
+        }
+    }
+
+    public void processMove() {
+        float x = position.x;
+        float y = position.y - 0.005f;
+
+        Vector2 pos1, pos2, pos3, pos4;
+
+        // Нижний правый угол
+        pos1 = new Vector2(x + 0.04f, y - 0.04f);
+
+        // Нижний левый угол
+        pos2 = new Vector2(x - 0.04f, y - 0.04f);
+
+        // Верхний правый угол
+        pos3 = new Vector2(x + 0.04f, y + 0.04f);
+
+        // Верхний левый угол
+        pos4 = new Vector2(x - 0.04f, y + 0.04f);
+
+        World w = World.getInstance();
+        Entity entity1, entity2, entity3, entity4;
+
+        entity1 = w.findEntity(pos1, this);
+        if ((entity1 != null) && !(entity1 instanceof TankEntity))
+            entity1.onEntityCollision(this);
+
+        entity2 = w.findEntity(pos2, this);
+        if ((entity2 != null) && !(entity2 instanceof TankEntity) && !(entity1 == entity2))
+            entity2.onEntityCollision(this);
+
+        entity3 = w.findEntity(pos3, this);
+        if ((entity3 != null) && !(entity3 instanceof TankEntity) && !(entity3 == entity2) && !(entity3 == entity1))
+            entity3.onEntityCollision(this);
+
+        entity4 = w.findEntity(pos4, this);
+        if ((entity4 != null) && !(entity4 instanceof TankEntity) && !(entity4 == entity1) && !(entity4 == entity2) && !(entity4 == entity3))
+            entity4.onEntityCollision(this);
+    }
+
     @Override
     public void updateEntity() {
         if (ai != null) {
             ai.update();
         }
         if (timeToNextShoot > 0) timeToNextShoot--;
+
+        if (shootDelayModifierTime > 0) shootDelayModifierTime--;
+        else shootDelayModifier = 1;
     }
 
     @Override
@@ -213,9 +288,30 @@ public class TankEntity extends Entity {
         GL20.glPopMatrix();
     }
 
-    public TankEntity setAI(PlayerAI ai) {
+    @Override
+    public void onEntityCollision(Entity entity) {
+        if (entity instanceof ShellWrapper) {
+
+            health -= ((ShellWrapper) entity).getPower();
+            if (health <= 0) World.getInstance().removeEntity(this);
+        }
+
+    }
+
+    @Override
+    public boolean isVectorInBounds(Vector2 pos) {
+        float mx = position.x - 0.05f;
+        float my = position.y - 0.05f;
+
+        float x = pos.x;
+        float y = pos.y;
+
+        return (x <= (mx + 0.1)) && (x >= (mx)) && (y <= (my + 0.1)) && (y >= (my));
+    }
+
+    public TankEntity setAI(TankAI ai) {
         this.ai = ai;
-        ai.setPlayer(this);
+        ai.setTankEntity(this);
         return this;
     }
 
@@ -266,11 +362,14 @@ public class TankEntity extends Entity {
                     break;
                 }
             }
-            Shell shell = new Shell(position.clone(), new Vector2(x, y), rotation);
 
-            World.getInstance().addEntity(shell);
+            ShellWrapper wrapper = shell.createWrapper(position.clone(), new Vector2(x, y), rotation, this);
+            World.getInstance().addEntity(wrapper);
 
-            timeToNextShoot = SHOOT_DELAY;
+
+            int delay = (int) (shell.getShootDelay() * shootDelayModifier);
+            if (delay < 1) delay = 1;
+            timeToNextShoot = delay;
         }
     }
 
@@ -278,5 +377,24 @@ public class TankEntity extends Entity {
         return timeToNextShoot <= 0;
     }
 
+    public void setShootDelayModifier(float shootDelayModifier, int forTime) {
+        this.shootDelayModifier = shootDelayModifier;
+        this.shootDelayModifierTime = forTime;
+    }
+
+    public int getHealth() {
+        return health;
+    }
+
+    public void setHealth(int health) {
+        this.health = health;
+    }
+
+    public Vector2 getPos() {
+        return position;
+    }
+
     private enum Direction {UP, DOWN, LEFT, RIGHT}
+
+    public enum Effect {SHOOT_SPEED_UP, SPEED_UP}
 }

@@ -1,18 +1,19 @@
 package WorldProviding;
 
 
-import Blocks.Block;
-import Blocks.Blocks;
-import Blocks.BlockWrapper;
+import Entities.Entity;
+import Entities.HUDElement;
 import Game.GameGL;
-import Gui.MouseHandler;
-import Objects.HUDElement;
 import Vectors.BlockPos;
 import Vectors.Vector2;
+import WorldBlocks.Block;
+import WorldBlocks.BlockWrapper;
+
 import java.util.*;
-import Objects.Entity;
+import java.util.function.Predicate;
 
 import static Rendering.WorldRenderer.GL20;
+import static WorldBlocks.Blocks.*;
 
 /**
  * Создано Юрием в 31.12.16.
@@ -24,22 +25,12 @@ import static Rendering.WorldRenderer.GL20;
 
 public class World implements Iterable<BlockWrapper> {
     public static final int CHUNK_SIZE = 20;
-    private HashMap<BlockPos, Chunk> chunks = new HashMap<>();
+    private static World instance;
     public ArrayList<HUDElement> hudElements = new ArrayList<>();
+    private HashMap<BlockPos, Chunk> chunks = new HashMap<>();
     private ArrayList<Entity> entities = new ArrayList<>();
     private ArrayList<Entity> updatableEntities = new ArrayList<>();
     private Thread thread;
-
-    private static World instance;
-
-    public static void generateNewWorld() {
-        Random random = new Random();
-        instance = new World();
-        for (int i = 0; i < 555; i++) {
-            BlockPos pos = new BlockPos(random.nextInt(20) - 10, random.nextInt(20) - 10);
-            instance.setBlock(pos, Blocks.stone);
-        }
-    }
 
     public World() {
 
@@ -48,7 +39,32 @@ public class World implements Iterable<BlockWrapper> {
         thread.start();
     }
 
-
+    public static void generateNewWorld() {
+        Random random = new Random();
+        instance = new World();
+        for (int i = 0; i < 555; i++) {
+            Block block;
+            switch (i % 30) {
+                case 10: {
+                    block = tnt;
+                    break;
+                }
+                case 5: {
+                    block = turret;
+                    break;
+                }
+                case 0: {
+                    block = chest;
+                    break;
+                }
+                default: {
+                    block = stone;
+                }
+            }
+            BlockPos pos = new BlockPos(random.nextInt(20) - 10, random.nextInt(20) - 10);
+            instance.setBlock(pos, block);
+        }
+    }
 
     public static void load(String worldName) {
 
@@ -144,10 +160,12 @@ public class World implements Iterable<BlockWrapper> {
 
     private void loop() {
         while (true) {
+            long before = new Date().getTime();
             try {
-            for (Entity entity : updatableEntities) {
-                entity.updateEntity();
-            }
+
+                for (int i = 0; i < updatableEntities.size(); i++) {
+                    updatableEntities.get(i).updateEntity();
+                }
 
 
                 Thread.sleep(1000 / 20);
@@ -155,29 +173,36 @@ public class World implements Iterable<BlockWrapper> {
                 e.printStackTrace();
             } catch (ConcurrentModificationException ignored) {
 
+            } finally {
+                long after = new Date().getTime();
+                long sum = after - before - 1000 / 20;
+
+                if (sum > 10) System.out.printf("Entities update took %dms\n", sum);
             }
         }
     }
 
     public void onDraw() {
-
-        for (Map.Entry<BlockPos, Chunk> entry : chunks.entrySet()) {
-            GL20.glPushMatrix();
-            {
-                float x = entry.getKey().getX();
-                float y = entry.getKey().getY();
-                GL20.glTranslated((x / 2.0) * CHUNK_SIZE * 0.1, (y / 2.0) * CHUNK_SIZE * 0.1, 0);
-                entry.getValue().onDraw(GL20);
-                GL20.glTranslated((x / 2.0) * CHUNK_SIZE * -0.1, (y / 2.0) * CHUNK_SIZE * -0.1, 0);
+        try {
+            for (Map.Entry<BlockPos, Chunk> entry : chunks.entrySet()) {
+                GL20.glPushMatrix();
+                {
+                    float x = entry.getKey().getX();
+                    float y = entry.getKey().getY();
+                    GL20.glTranslated((x / 2.0) * CHUNK_SIZE * 0.1, (y / 2.0) * CHUNK_SIZE * 0.1, 0);
+                    entry.getValue().onDraw(GL20);
+                    GL20.glTranslated((x / 2.0) * CHUNK_SIZE * -0.1, (y / 2.0) * CHUNK_SIZE * -0.1, 0);
+                }
+                GL20.glPopMatrix();
             }
-            GL20.glPopMatrix();
-        }
-        for (Entity entity : entities) {
-            GL20.glPushMatrix();
-            {
-                entity.onDraw();
+            for (Entity entity : entities) {
+                GL20.glPushMatrix();
+                {
+                    entity.onDraw();
+                }
+                GL20.glPopMatrix();
             }
-            GL20.glPopMatrix();
+        } catch (ConcurrentModificationException ignore) {
         }
     }
 
@@ -188,6 +213,40 @@ public class World implements Iterable<BlockWrapper> {
 
     public void destroyBlock(BlockPos pos) {
         getChunkByBlockPos(pos).destroyBlock(pos);
+    }
+
+    public void createExplosion(BlockPos pos, int power) {
+        World world = World.getInstance();
+        if (world.hasBlockAtPos(pos.upperBlock()))
+            World.getInstance().getBlockByPos(pos.upperBlock()).explosion(power);
+        if (world.hasBlockAtPos(pos.downBlock()))
+            World.getInstance().getBlockByPos(pos.downBlock()).explosion(power);
+        if (world.hasBlockAtPos(pos.leftBlock()))
+            world.getBlockByPos(pos.leftBlock()).explosion(power);
+        if (world.hasBlockAtPos(pos.rightBlock()))
+            world.getBlockByPos(pos.rightBlock()).explosion(power);
+    }
+
+    public BlockPos toBlockPos(Vector2 vector) {
+        return new BlockPos(Math.round(vector.x / 0.1f) - 1, Math.round(vector.y / 0.1f));
+    }
+
+    public Entity findEntity(Vector2 pos, Entity... except) {
+        ArrayList<Entity> exceptions = new ArrayList<>();
+        Collections.addAll(exceptions, except);
+        for (Entity entity : entities) {
+            if (exceptions.contains(entity)) continue;
+            if (entity.isVectorInBounds(pos)) return entity;
+        }
+
+        return null;
+    }
+
+    public Entity findEntity(Predicate<Entity> filter) {
+        for (Entity entity : entities) {
+            if (filter.test(entity)) return entity;
+        }
+        return null;
     }
 
     private class WorldIterator implements Iterator<BlockWrapper> {

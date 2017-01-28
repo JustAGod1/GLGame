@@ -1,21 +1,18 @@
 package WorldProviding;
 
 
-import Blocks.Block;
-import Blocks.BlockWrapper;
 import Rendering.Teselator;
 import Vectors.BlockPos;
+import WorldBlocks.Block;
+import WorldBlocks.BlockWrapper;
 import com.jogamp.opengl.GL2;
-import com.jogamp.opengl.fixedfunc.GLMatrixFunc;
 
+import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
 import static Rendering.WorldRenderer.GL20;
-import static com.jogamp.opengl.fixedfunc.GLMatrixFunc.GL_MODELVIEW;
-import static com.jogamp.opengl.fixedfunc.GLMatrixFunc.GL_MODELVIEW_MATRIX;
-import static com.jogamp.opengl.fixedfunc.GLMatrixFunc.GL_PROJECTION_MATRIX;
 
 /**
  * Создано Юрием в 31.12.16.
@@ -34,11 +31,13 @@ public class Chunk implements Iterable<BlockWrapper> {
     }
 
     public void setBlock(BlockPos pos, Block block) {
-        blocks.put(pos, new BlockWrapper(block, pos));
+        setBlock(pos, block.createWrapper(pos));
+
     }
 
     public void setBlock(BlockPos pos, BlockWrapper block) {
         blocks.put(pos, block);
+        block.onBlockPlace();
     }
 
     @Override
@@ -49,16 +48,19 @@ public class Chunk implements Iterable<BlockWrapper> {
     public void onDraw(GL2 gl) {
         drawBackground();
 
-        for (Map.Entry<BlockPos, BlockWrapper> entry : blocks.entrySet()) {
-            BlockWrapper block = entry.getValue();
-            BlockPos pos = entry.getKey();
+        try {
+            for (Map.Entry<BlockPos, BlockWrapper> entry : blocks.entrySet()) {
+                BlockWrapper block = entry.getValue();
+                BlockPos pos = entry.getKey();
 
-            GL20.glPushMatrix();
-            {
-                //GL20.glTranslated(-1 * (World.CHUNK_SIZE / 2) * 0.1, -1 * (World.CHUNK_SIZE / 2) * 0.1, 0);
-                block.drawAt((float) (pos.getX() / 10.0), (float) (pos.getY() / 10.0), GL20);
+                GL20.glPushMatrix();
+                {
+                    //GL20.glTranslated(-1 * (World.CHUNK_SIZE / 2) * 0.1, -1 * (World.CHUNK_SIZE / 2) * 0.1, 0);
+                    block.drawAt((float) (pos.getX() / 10.0), (float) (pos.getY() / 10.0), GL20);
+                }
+                GL20.glPopMatrix();
             }
-            GL20.glPopMatrix();
+        } catch (ConcurrentModificationException ignore) {
         }
     }
 

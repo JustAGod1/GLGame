@@ -1,11 +1,13 @@
 package Rendering;
 
+import Vectors.Vector2;
 import Vectors.Vector3;
+import com.jogamp.opengl.util.awt.TextRenderer;
 import com.jogamp.opengl.util.texture.Texture;
 import com.jogamp.opengl.util.texture.TextureData;
 import com.jogamp.opengl.util.texture.TextureIO;
 
-import java.io.IOException;
+import java.awt.*;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
@@ -22,11 +24,10 @@ public class Teselator {
     public static final Teselator instance = new Teselator();
 
     private Map<String, Texture> loadedTextures = new HashMap<>();
-
     private Texture currentTexture = null;
-
     private Vector3 currentTranslation = new Vector3(0, 0, 0);
 
+    private TextRenderer textRenderer = new TextRenderer(new Font(null, Font.BOLD, 5), false, false);
 
     private boolean drawing;
 
@@ -72,7 +73,7 @@ public class Teselator {
             textureData = TextureIO.newTextureData(drawable.getGLProfile(), input, false, "png");
             texture = TextureIO.newTexture(GL20, textureData);
 
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -92,6 +93,7 @@ public class Teselator {
         currentTranslation.z += z;
 
         GL20.glTranslatef(x, y, z);
+
     }
 
     public void setTranslation(float x, float y, float z) {
@@ -160,5 +162,14 @@ public class Teselator {
         if (currentTexture != null) {
             currentTexture.disable(GL20);
         }
+    }
+
+    public void drawText(String text, Vector2 pos) {
+        textRenderer.begin3DRendering();
+        {
+            textRenderer.setColor(0, 0, 0, 1);
+            textRenderer.draw3D(text, pos.x, pos.y, 0, 1);
+        }
+        textRenderer.end3DRendering();
     }
 }

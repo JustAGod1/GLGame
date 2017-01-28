@@ -1,7 +1,7 @@
 package Registries;
 
-import Objects.Building;
-import Objects.HUDElement;
+import Entities.Building;
+import Entities.HUDElement;
 import com.jogamp.opengl.GL2;
 
 import java.util.ArrayList;
