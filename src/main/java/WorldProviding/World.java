@@ -44,16 +44,20 @@ public class World implements Iterable<BlockWrapper> {
         instance = new World();
         for (int i = 0; i < 555; i++) {
             Block block;
-            switch (i % 30) {
+            switch (i % 60) {
+                case 5:
+                case 3:
                 case 10: {
                     block = tnt;
                     break;
                 }
-                case 5: {
+                case 2: {
                     block = turret;
                     break;
                 }
-                case 0: {
+                case 0:
+                case 8:
+                case 34: {
                     block = chest;
                     break;
                 }

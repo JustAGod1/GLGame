@@ -51,7 +51,7 @@ public final class Blocks {
             EffectHolder holder = new EffectHolder(SHOOT_SPEED_UP, 0.2f, 60 * 20, 60 * 20, new Vector2(pos.getX() * 0.1f, pos.getY() * 0.1f));
             World.getInstance().addEntity(holder);
         }
-    }.setTexture("chest_picture.png");
+    }.setTexture("chest.png");
     public static final Block turret = new Block() {
 
         @Override
@@ -59,5 +59,5 @@ public final class Blocks {
             return new TurretWrapper(pos);
         }
 
-    }.setTexture("turret_base.png");
+    }.setTexture("turret_base.png").setHardness(30);
 }

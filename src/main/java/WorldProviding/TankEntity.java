@@ -260,7 +260,6 @@ public class TankEntity extends Entity {
             }
         }
 
-        GL20.glColor3f(0, 1, 0);
 
         GL20.glLineWidth(5);
         GL20.glPushMatrix();
@@ -280,7 +279,6 @@ public class TankEntity extends Entity {
             }
             te.draw();
 
-            GL20.glColor3f(1, 0, 0);
 
             te.translate2D(-position.x, -position.y);
 

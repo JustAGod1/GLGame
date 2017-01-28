@@ -40,6 +40,11 @@ public class TurretWrapper extends BlockWrapper {
         super.onDestroyByExplosion();
     }
 
+    @Override
+    public void onRemove() {
+        destroy();
+    }
+
     private class TurretGunEntity extends Entity {
 
         private Vector2 pos;
@@ -53,11 +58,15 @@ public class TurretWrapper extends BlockWrapper {
         @Override
         public void updateEntity() {
             Vector2 vector = pos.clone();
-            vector.decrease(GameGL.player.getPos());
+            try {
+                vector.decrease(GameGL.player.getPos());
+            } catch (NullPointerException e) {
+
+            }
 
             direction = vector.direction();
 
-            //if (delay <= 0) shoot();
+            if (delay <= 0) shoot();
 
             delay--;
         }
@@ -79,6 +88,7 @@ public class TurretWrapper extends BlockWrapper {
                 GL20.glPushMatrix();
                 {
                     GL20.glRotated(direction + 90, 0, 0, 1);
+                    GL20.glColor3f(1, 1, 1);
 
                     te.startDrawingQuads();
                     {
@@ -105,7 +115,8 @@ public class TurretWrapper extends BlockWrapper {
         }
 
         private void shoot() {
-            World.getInstance().addEntity(Shells.TURRET_SHELL.createWrapper(pos.clone(), new Vector2(direction).normalize(), direction, this));
+            World.getInstance().addEntity(Shells.TURRET_SHELL.createWrapper(pos.clone(), new Vector2(direction + 180).normalize(), direction, this));
+            delay = Shells.TURRET_SHELL.getShootDelay();
         }
 
 

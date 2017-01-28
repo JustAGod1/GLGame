@@ -84,6 +84,11 @@ public class ShellWrapper extends Entity {
 
     @Override
     public void onEntityCollision(Entity entity) {
+        if (entity instanceof ShellWrapper) {
+            World.getInstance().removeEntity(entity);
+            World.getInstance().removeEntity(this);
+            return;
+        }
         if (entity != getEntity() && !entity.isInvincible()) {
             entity.onEntityCollision(this);
 

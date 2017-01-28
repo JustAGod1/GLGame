@@ -36,6 +36,7 @@ public class Chunk implements Iterable<BlockWrapper> {
     }
 
     public void setBlock(BlockPos pos, BlockWrapper block) {
+        if (blocks.containsKey(pos)) blocks.get(pos).onRemove();
         blocks.put(pos, block);
         block.onBlockPlace();
     }
