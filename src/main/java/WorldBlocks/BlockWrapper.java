@@ -57,7 +57,7 @@ public class BlockWrapper {
         return block;
     }
 
-    public void drawAt(float x, float y, GL2 gl) {
+    public synchronized void drawAt(float x, float y, GL2 gl) {
         gl.glPushMatrix();
         {
             Teselator te = Teselator.instance;
@@ -79,6 +79,7 @@ public class BlockWrapper {
             if (destroyStage != 0) {
                 int stage = (int) (9 / ((block.getHardness() * 1.0) / (destroyStage * 1.0)));
 
+                if (stage > 9) stage = 9;
 
                 GL20.glTranslated(0, 0, -0.001);
 
@@ -112,7 +113,8 @@ public class BlockWrapper {
         return (x <= (mx * 0.1 + 0.1)) && (x >= (mx * 0.1)) && (y <= (my * 0.1 + 0.1)) && (y >= (my * 0.1));
     }
 
-    public void addDestroy(int power, Entity entity) {
+    public synchronized void addDestroy(int power, Entity entity) {
+        if (block.isInvincible()) return;
         destroyStage += power;
         if (destroyStage > block.getHardness()) {
             onDestroyByEntity(entity);

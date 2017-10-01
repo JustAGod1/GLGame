@@ -13,8 +13,9 @@ import Vectors.BlockPos;
  */
 
 public class Block {
-    private String texture = "block.png";
+    protected String texture = "block.png";
     private int hardness = 0;
+    private boolean invicible;
 
     public int getHardness() {
         return hardness;
@@ -37,7 +38,7 @@ public class Block {
         return texture;
     }
 
-    protected Block setTexture(String texture) {
+    public Block setTexture(String texture) {
         this.texture = texture;
         return this;
     }
@@ -48,5 +49,14 @@ public class Block {
 
     public void onBlockPlace(BlockWrapper wrapper) {
 
+    }
+
+    public boolean isInvincible() {
+        return invicible;
+    }
+
+    public Block setInvincible(boolean invincible) {
+        this.invicible = invincible;
+        return this;
     }
 }

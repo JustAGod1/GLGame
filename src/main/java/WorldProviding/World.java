@@ -8,6 +8,7 @@ import Vectors.BlockPos;
 import Vectors.Vector2;
 import WorldBlocks.Block;
 import WorldBlocks.BlockWrapper;
+import WorldBlocks.EnemyBlock;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -27,10 +28,12 @@ public class World implements Iterable<BlockWrapper> {
     public static final int CHUNK_SIZE = 20;
     private static World instance;
     public ArrayList<HUDElement> hudElements = new ArrayList<>();
+    public boolean paused = true;
     private HashMap<BlockPos, Chunk> chunks = new HashMap<>();
     private ArrayList<Entity> entities = new ArrayList<>();
     private ArrayList<Entity> updatableEntities = new ArrayList<>();
     private Thread thread;
+    private boolean generated = false;
 
     public World() {
 
@@ -42,32 +45,57 @@ public class World implements Iterable<BlockWrapper> {
     public static void generateNewWorld() {
         Random random = new Random();
         instance = new World();
-        for (int i = 0; i < 555; i++) {
-            Block block;
-            switch (i % 60) {
-                case 5:
-                case 3:
-                case 10: {
-                    block = tnt;
-                    break;
-                }
-                case 2: {
-                    block = turret;
-                    break;
-                }
-                case 0:
-                case 8:
-                case 34: {
-                    block = chest;
-                    break;
-                }
-                default: {
-                    block = stone;
-                }
+        for (int i = -10; i < 10; i++) {
+            for (int j = -10; j < 10; j++) {
+                BlockPos pos = new BlockPos(i, j);
+                instance.setBlock(pos, getNextBlock(random));
             }
-            BlockPos pos = new BlockPos(random.nextInt(20) - 10, random.nextInt(20) - 10);
-            instance.setBlock(pos, block);
         }
+        instance.generated = true;
+    }
+
+    private static Block getNextBlock(Random random) {
+        int i = random.nextInt(100 + 1);
+        Block block;
+        switch (i % 100) {
+            case 5:
+            case 3:
+            case 10: {
+                block = TNT;
+                break;
+            }
+
+
+            case 0:
+            case 8:
+            case 34: {
+                block = CHEST;
+                break;
+            }
+
+            case 11: {
+                block = TURRET;
+                break;
+            }
+            case 14:
+            case 4: {
+                block = RAPID_TURRET;
+                break;
+            }
+            case 7:
+            case 70:
+            case 33:
+            case 36:
+            case 35: {
+                block = BEDROCK;
+                break;
+            }
+            default: {
+                block = STONE;
+            }
+        }
+
+        return block;
     }
 
     public static void load(String worldName) {
@@ -113,7 +141,6 @@ public class World implements Iterable<BlockWrapper> {
     public Set<Map.Entry<BlockPos, Chunk>> getChunksSet() {
         return chunks.entrySet();
     }
-
 
     @Override
     public Iterator<BlockWrapper> iterator() {
@@ -163,18 +190,36 @@ public class World implements Iterable<BlockWrapper> {
     }
 
     private void loop() {
+        boolean isEnemiesDestroyed = false;
+        int countdown = 80;
         while (true) {
             long before = new Date().getTime();
             try {
 
                 for (int i = 0; i < updatableEntities.size(); i++) {
                     updatableEntities.get(i).updateEntity();
+                    if (paused) break;
+                }
+
+                if (generated && (getEnemyCount() == 0)) {
+
+                    isEnemiesDestroyed = true;
+                }
+
+                if (isEnemiesDestroyed) {
+                    if (countdown == 0) {
+                        generateNewWorld();
+                        GameGL.player.respawn();
+                        destroyWorld();
+                        return;
+                    } else countdown--;
                 }
 
 
+                while (paused) Thread.sleep(10);
                 Thread.sleep(1000 / 20);
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                return;
             } catch (ConcurrentModificationException ignored) {
 
             } finally {
@@ -184,6 +229,18 @@ public class World implements Iterable<BlockWrapper> {
                 if (sum > 10) System.out.printf("Entities update took %dms\n", sum);
             }
         }
+    }
+
+    private int getEnemyCount() {
+        int result = 0;
+
+        for (BlockWrapper wrapper : this) {
+            if (wrapper instanceof EnemyBlock) {
+                result++;
+            }
+        }
+
+        return result;
     }
 
     public void onDraw() {
@@ -220,15 +277,21 @@ public class World implements Iterable<BlockWrapper> {
     }
 
     public void createExplosion(BlockPos pos, int power) {
+        createExplosion(new Vector2(pos.getX() * 0.1f, pos.getY() * 0.1f), power);
+    }
+
+    public void createExplosion(Vector2 center, int power) {
         World world = World.getInstance();
-        if (world.hasBlockAtPos(pos.upperBlock()))
-            World.getInstance().getBlockByPos(pos.upperBlock()).explosion(power);
-        if (world.hasBlockAtPos(pos.downBlock()))
-            World.getInstance().getBlockByPos(pos.downBlock()).explosion(power);
-        if (world.hasBlockAtPos(pos.leftBlock()))
-            world.getBlockByPos(pos.leftBlock()).explosion(power);
-        if (world.hasBlockAtPos(pos.rightBlock()))
-            world.getBlockByPos(pos.rightBlock()).explosion(power);
+
+        Vector2 up = new Vector2(center.x, center.y + 0.1f);
+        Vector2 down = new Vector2(center.x, center.y - 0.1f);
+        Vector2 left = new Vector2(center.x - 0.1f, center.y);
+        Vector2 right = new Vector2(center.x + 0.1f, center.y);
+
+        if (world.hasBlockAtPos(up)) getBlockByPos(up).explosion(power);
+        if (world.hasBlockAtPos(down)) getBlockByPos(down).explosion(power);
+        if (world.hasBlockAtPos(left)) getBlockByPos(left).explosion(power);
+        if (world.hasBlockAtPos(right)) getBlockByPos(right).explosion(power);
     }
 
     public BlockPos toBlockPos(Vector2 vector) {
@@ -251,6 +314,10 @@ public class World implements Iterable<BlockWrapper> {
             if (filter.test(entity)) return entity;
         }
         return null;
+    }
+
+    private void destroyWorld() {
+        thread.interrupt();
     }
 
     private class WorldIterator implements Iterator<BlockWrapper> {
@@ -291,4 +358,6 @@ public class World implements Iterable<BlockWrapper> {
         }
 
     }
+
+
 }

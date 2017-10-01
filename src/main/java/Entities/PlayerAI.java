@@ -17,9 +17,11 @@ public class PlayerAI extends TankAI implements KeyListener{
 
     private static final Set<KeyProcessor> registredProcessors = new HashSet<>();
     private Set<KeyProcessor> typedKeys = new HashSet<>();
+    private int score = 0;
 
     public PlayerAI() {
         GameGL.window.addKeyListener(this);
+        GameGL.window.setTitle("Score: " + score);
     }
 
     public static void registerKeyProcessor(KeyProcessor processor) {
@@ -28,6 +30,11 @@ public class PlayerAI extends TankAI implements KeyListener{
         } else {
             registredProcessors.add(processor);
         }
+    }
+
+    public void addScore(int value) {
+        score += value;
+        GameGL.window.setTitle("Score: " + score);
     }
 
     @Override
@@ -58,7 +65,7 @@ public class PlayerAI extends TankAI implements KeyListener{
     @Override
     public void keyReleased(KeyEvent e) {
 
-        int a = e.getKeyCode();
+        final int a = e.getKeyCode();
 
         typedKeys.removeIf(processor -> processor.getKeyCode() == a);
 

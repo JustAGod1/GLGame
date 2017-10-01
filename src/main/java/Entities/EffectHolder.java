@@ -1,9 +1,8 @@
 package Entities;
 
+import Entities.TankEntity.Effect;
 import Rendering.Teselator;
 import Vectors.Vector2;
-import WorldProviding.TankEntity;
-import WorldProviding.TankEntity.Effect;
 import WorldProviding.World;
 
 import static Rendering.WorldRenderer.GL20;
@@ -42,25 +41,7 @@ public class EffectHolder extends Entity {
     @Override
     public void onDraw() {
         Teselator te = Teselator.instance;
-        GL20.glPushMatrix();
-        {
 
-            GL20.glTranslated(pos.x, pos.y, -0.5);
-            GL20.glColor3f(1, 1, 1);
-
-            te.bindTexture("bubble.png");
-
-            te.startDrawingQuads();
-            {
-                te.add2DVertexWithUV(0, 0, 0, 1);
-                te.add2DVertexWithUV(0.1f, 0, 1, 1);
-                te.add2DVertexWithUV(0.1f, 0.1f, 1, 0);
-                te.add2DVertexWithUV(0, 0.1f, 0, 0);
-            }
-            te.draw();
-
-        }
-        GL20.glPopMatrix();
         String texture = null;
 
         switch (effect) {
@@ -68,11 +49,19 @@ public class EffectHolder extends Entity {
                 texture = "shoot_speed_up.png";
                 break;
             }
+            case HEALTH: {
+                texture = "heart.png";
+                break;
+            }
+            case SPEED_UP: {
+                texture = "speed_up.png";
+                break;
+            }
         }
 
         GL20.glPushMatrix();
         {
-            GL20.glTranslated(pos.x + 0.07, pos.y + 0.07, -0.6);
+            GL20.glTranslated(pos.x + 0.07, pos.y + 0.07, -0.34);
             GL20.glPushMatrix();
             {
                 GL20.glRotated(180, 0, 0, 1);
@@ -92,6 +81,29 @@ public class EffectHolder extends Entity {
             GL20.glPopMatrix();
         }
         GL20.glPopMatrix();
+
+        GL20.glPushMatrix();
+        {
+
+            GL20.glTranslated(pos.x, pos.y, -0.35);
+            GL20.glColor3f(1, 1, 1);
+
+            te.bindTexture("bubble.png");
+
+            te.startDrawingQuads();
+            {
+                te.add2DVertexWithUV(0, 0, 0, 1);
+                te.add2DVertexWithUV(0.1f, 0, 1, 1);
+                te.add2DVertexWithUV(0.1f, 0.1f, 1, 0);
+                te.add2DVertexWithUV(0, 0.1f, 0, 0);
+            }
+            te.draw();
+
+        }
+        GL20.glPopMatrix();
+
+
+
 
 
     }

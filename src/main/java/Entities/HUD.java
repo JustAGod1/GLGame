@@ -2,10 +2,11 @@ package Entities;
 
 import Entities.Shells.Shell;
 import Entities.Shells.ShellWrapper;
+import Entities.TankEntity.Effect;
 import Game.GameGL;
 import Rendering.Teselator;
 import Vectors.Vector2;
-import WorldProviding.TankEntity.Effect;
+import WorldProviding.World;
 import com.jogamp.newt.event.KeyEvent;
 import com.jogamp.newt.event.KeyListener;
 import com.jogamp.newt.event.MouseEvent;
@@ -15,6 +16,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 
+import static Game.GameGL.player;
 import static Rendering.WorldRenderer.GL20;
 import static com.jogamp.opengl.GL.GL_LINE_STRIP;
 
@@ -39,6 +41,7 @@ public class HUD implements KeyListener, MouseListener {
     }
 
     public void onDraw() {
+        //region Frame
         GL20.glPushMatrix();
         {
             Teselator te = Teselator.instance;
@@ -70,9 +73,10 @@ public class HUD implements KeyListener, MouseListener {
 
         }
         GL20.glPopMatrix();
+        //endregion
 
-
-        HashSet<Effect> effects = GameGL.player.getEffectsList();
+        //region Effects
+        HashSet<Effect> effects = player.getEffectsList();
         Iterator<Effect> iterator = effects.iterator();
 
         {
@@ -89,7 +93,9 @@ public class HUD implements KeyListener, MouseListener {
                 i--;
             }
         }
+        //endregion
 
+        //region Shells
         for (int i = 0; i < shells.size(); i++) {
             GL20.glPushMatrix();
             {
@@ -98,6 +104,16 @@ public class HUD implements KeyListener, MouseListener {
             }
             GL20.glPopMatrix();
         }
+        //endregion
+
+        //region Health
+        GL20.glPushMatrix();
+        {
+            GL20.glTranslated(1 - 0.2 - 0.05, 1 - 0.05 - 0.05, -0.4);
+            drawHealth(player.getHealth(), TankEntity.MAX_HEALTH);
+        }
+        GL20.glPopMatrix();
+        //endregion
 
     }
 
@@ -138,7 +154,7 @@ public class HUD implements KeyListener, MouseListener {
             te.draw();
             GL20.glPushMatrix();
             {
-                GL20.glScaled(0.01, 0.01, 1);
+                //GL20.glScaled(0.01, 0.01, 1);
                 te.drawText(("x" + count), new Vector2(0.0f, 0.0f));
             }
             GL20.glPopMatrix();
@@ -155,6 +171,10 @@ public class HUD implements KeyListener, MouseListener {
             switch (effect) {
                 case SHOOT_SPEED_UP: {
                     te.bindTexture("shoot_speed_up.png");
+                    break;
+                }
+                case SPEED_UP: {
+                    te.bindTexture("speed_up.png");
                     break;
                 }
                 default: {
@@ -175,13 +195,43 @@ public class HUD implements KeyListener, MouseListener {
         GL20.glPopMatrix();
     }
 
+    private void drawHealth(float amount, float max) {
+        Teselator te = Teselator.instance;
+
+        te.disableTexture();
+
+        float ratio = (amount * 1.0f) / (max * 1.0f) * 0.2f;
+
+        GL20.glColor3f(1, 0, 0);
+        te.startDrawingQuads();
+        {
+            te.add2DVertex(0, 0);
+            te.add2DVertex(0, 0.05f);
+            te.add2DVertex(ratio, 0.05f);
+            te.add2DVertex(ratio, 0);
+        }
+        te.draw();
+
+        if (ratio >= 0.2) return;
+
+        GL20.glColor3f(0, 0, 0);
+        te.startDrawingQuads();
+        {
+            te.add2DVertex(ratio, 0);
+            te.add2DVertex(ratio, 0.05f);
+            te.add2DVertex(0.2f, 0.05f);
+            te.add2DVertex(0.2f, 0);
+        }
+        te.draw();
+    }
+
     private void setIndex(int index) {
         if (index == 0)
             this.index = index;
         else
             this.index = index % shells.size();
 
-        GameGL.player.setShell(shells.get(this.index));
+        player.setShell(shells.get(this.index));
 
     }
 
@@ -190,6 +240,8 @@ public class HUD implements KeyListener, MouseListener {
         int a = e.getKeyCode();
 
         if (a == 9) setIndex(index + 1);
+        if (a == 27) World.getInstance().paused = !World.getInstance().paused;
+        if (a == 13) GameGL.player.respawn();
 
     }
 

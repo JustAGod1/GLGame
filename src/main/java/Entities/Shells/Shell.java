@@ -35,7 +35,7 @@ public class Shell {
         return power;
     }
 
-    protected Shell setPower(int power) {
+    public Shell setPower(int power) {
         this.power = power;
         return this;
     }
@@ -53,7 +53,7 @@ public class Shell {
         return shootDelay;
     }
 
-    protected Shell setShootDelay(int delay) {
+    public Shell setShootDelay(int delay) {
         this.shootDelay = delay;
         return this;
     }

@@ -8,9 +8,11 @@ import com.jogamp.opengl.util.texture.TextureData;
 import com.jogamp.opengl.util.texture.TextureIO;
 
 import java.awt.*;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Scanner;
 
 import static Rendering.WorldRenderer.GL20;
 import static Rendering.WorldRenderer.drawable;
@@ -32,6 +34,25 @@ public class Teselator {
     private boolean drawing;
 
     private Teselator() {
+    }
+
+    public static void main(String[] args) {
+        double destination, speed, corner, height, wall;
+
+        Scanner scanner = new Scanner(System.in);
+
+        destination = scanner.nextDouble();
+
+        speed = scanner.nextDouble();
+        corner = scanner.nextDouble();
+
+        wall = scanner.nextDouble();
+
+        height = destination * destination / (speed * Math.cos(Math.toRadians(corner)));
+
+        if (height > wall) System.out.println("Перелет");
+        else System.out.println("Недолет");
+
     }
 
     public void bindTexture(String res) {
@@ -73,6 +94,9 @@ public class Teselator {
             textureData = TextureIO.newTextureData(drawable.getGLProfile(), input, false, "png");
             texture = TextureIO.newTexture(GL20, textureData);
 
+        } catch (IOException e) {
+            System.err.println(res);
+            e.printStackTrace();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -133,7 +157,6 @@ public class Teselator {
         GL20.glTexCoord2d(u, v);
     }
 
-
     public void draw() {
         if (!drawing) throw new RuntimeException("Рисование еще не начато");
         drawing = false;
@@ -168,7 +191,7 @@ public class Teselator {
         textRenderer.begin3DRendering();
         {
             textRenderer.setColor(0, 0, 0, 1);
-            textRenderer.draw3D(text, pos.x, pos.y, 0, 1);
+            textRenderer.draw3D(text, pos.x, pos.y, 0, 0.01f);
         }
         textRenderer.end3DRendering();
     }

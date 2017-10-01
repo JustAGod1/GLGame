@@ -47,7 +47,7 @@ public class WorldRenderer implements GLEventListener {
         GL20.glEnable(GL_BLEND);
         GL20.glEnable(GL_DEPTH_TEST);
         GL20.glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
-        GL20.glClearColor(1, 0, 0, 1);
+        GL20.glClearColor(0, 0, 0, 1);
         //System.out.println(glAutoDrawable);
         //camera.setCamera();
 
@@ -65,6 +65,7 @@ public class WorldRenderer implements GLEventListener {
 
 
         GL20.glClear(GL2.GL_COLOR_BUFFER_BIT |  GL2.GL_DEPTH_BUFFER_BIT | GL2.GL_STENCIL_BUFFER_BIT);
+        GL20.glLoadIdentity();
 
 
 
@@ -116,12 +117,12 @@ public class WorldRenderer implements GLEventListener {
         private double step = 0.5;
 
         public CameraMan() {
-            pos = new Vector3(0,0,-0.1f);
+            pos = new Vector3(0, 0, 0);
             dir = new Vector3(0,0,0);
             up = new Vector3(0,1,0);
         }
 
-        private void setCamera() {
+        public void setCamera() {
 
             // Change to projection matrix.
             GL20.glMatrixMode(GL_PROJECTION);

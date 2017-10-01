@@ -98,13 +98,13 @@ public class ShellWrapper extends Entity {
 
     @Override
     public boolean isVectorInBounds(Vector2 pos) {
-        float mx = this.position.x * 10 - 0.0125f;
-        float my = this.position.y * 10 - 0.0125f;
+        float mx = this.position.x - 0.0125f;
+        float my = this.position.y - 0.0125f;
 
         float x = pos.x;
         float y = pos.y;
 
-        return (x <= (mx * 0.1 + 0.1)) && (x >= (mx * 0.1)) && (y <= (my * 0.1 + 0.1)) && (y >= (my * 0.1));
+        return ((x <= (mx + 0.025)) && (x >= (mx)) && (y <= (my + 0.025)) && (y >= (my)));
     }
 
     public int getPower() {

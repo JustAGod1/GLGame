@@ -19,7 +19,7 @@ public class PowerfulShell extends Shell {
     public void onBlockCollision(BlockWrapper block, ShellWrapper wrapper) {
         super.onBlockCollision(block, wrapper);
 
-        World.getInstance().createExplosion(World.getInstance().toBlockPos(wrapper.getPosition()), 5);
+        World.getInstance().createExplosion(wrapper.getPosition(), 5);
     }
 
     @Override

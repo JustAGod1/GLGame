@@ -1,11 +1,10 @@
-package WorldProviding;
+package Entities;
 
-import Entities.Entity;
 import Entities.Shells.Shell;
 import Entities.Shells.ShellWrapper;
-import Entities.TankAI;
 import Rendering.Teselator;
 import Vectors.Vector2;
+import WorldProviding.World;
 
 import java.util.HashSet;
 
@@ -16,6 +15,7 @@ import static Rendering.WorldRenderer.GL20;
  */
 public class TankEntity extends Entity {
 
+    public static final float MAX_HEALTH = 40;
 
     private int timeToNextShoot = 0;
     private Vector2 position = new Vector2(0.05f, 0.05f);
@@ -25,10 +25,15 @@ public class TankEntity extends Entity {
 
     private float shootDelayModifier = 1;
     private int shootDelayModifierTime = 0;
-    private int health = 20;
+
+    private float speedModifier = 1;
+    private int speedModifierTime = 0;
+
+    private float health = MAX_HEALTH;
 
 
     public boolean moveForward(float distance) {
+        distance *= speedModifier;
         if (direction != Direction.UP) {
             direction = Direction.UP;
             return true;
@@ -44,6 +49,7 @@ public class TankEntity extends Entity {
     }
 
     public boolean moveBackwards(float distance) {
+        distance *= speedModifier;
 
         if (direction != Direction.DOWN) {
             direction = Direction.DOWN;
@@ -60,6 +66,8 @@ public class TankEntity extends Entity {
     }
 
     public boolean moveLeft(float distance) {
+        distance *= speedModifier;
+
         if (direction != Direction.LEFT) {
             direction = Direction.LEFT;
             return true;
@@ -75,6 +83,8 @@ public class TankEntity extends Entity {
     }
 
     public boolean moveRight(float distance) {
+        distance *= speedModifier;
+
         if (direction != Direction.RIGHT) {
             direction = Direction.RIGHT;
             return true;
@@ -167,6 +177,8 @@ public class TankEntity extends Entity {
 
         if (shootDelayModifierTime > 0)
             res.add(Effect.SHOOT_SPEED_UP);
+        if (speedModifierTime > 0)
+            res.add(Effect.SPEED_UP);
 
         return res;
     }
@@ -177,7 +189,20 @@ public class TankEntity extends Entity {
                 setShootDelayModifier(value, time);
                 break;
             }
+            case HEALTH: {
+                health += value;
+                if (health > MAX_HEALTH) health = MAX_HEALTH;
+                break;
+            }
+            case SPEED_UP: {
+                setSpeedUpModifier(value, time);
+            }
         }
+    }
+
+    private void setSpeedUpModifier(float value, int time) {
+        speedModifier = value;
+        speedModifierTime = time;
     }
 
     public void processMove() {
@@ -227,6 +252,11 @@ public class TankEntity extends Entity {
 
         if (shootDelayModifierTime > 0) shootDelayModifierTime--;
         else shootDelayModifier = 1;
+
+        if (speedModifierTime > 0) speedModifierTime--;
+        else speedModifier = 1;
+
+        setHealth(getHealth() + 0.001f);
     }
 
     @Override
@@ -307,12 +337,6 @@ public class TankEntity extends Entity {
         return (x <= (mx + 0.1)) && (x >= (mx)) && (y <= (my + 0.1)) && (y >= (my));
     }
 
-    public TankEntity setAI(TankAI ai) {
-        this.ai = ai;
-        ai.setTankEntity(this);
-        return this;
-    }
-
     public void shoot() {
         if (isShootAvailable()) {
             int x = 0, y = 0;
@@ -380,11 +404,11 @@ public class TankEntity extends Entity {
         this.shootDelayModifierTime = forTime;
     }
 
-    public int getHealth() {
+    public float getHealth() {
         return health;
     }
 
-    public void setHealth(int health) {
+    public void setHealth(float health) {
         this.health = health;
     }
 
@@ -392,7 +416,30 @@ public class TankEntity extends Entity {
         return position;
     }
 
+    public boolean isAlive() {
+        return health > 0;
+    }
+
+    public void respawn() {
+
+
+        health = MAX_HEALTH;
+        position = new Vector2(0.05f, 0.05f);
+
+        World.getInstance().addEntity(this);
+    }
+
+    public TankAI getAI() {
+        return ai;
+    }
+
+    public TankEntity setAI(TankAI ai) {
+        this.ai = ai;
+        ai.setTankEntity(this);
+        return this;
+    }
+
     private enum Direction {UP, DOWN, LEFT, RIGHT}
 
-    public enum Effect {SHOOT_SPEED_UP, SPEED_UP}
+    public enum Effect {SHOOT_SPEED_UP, SPEED_UP, HEALTH}
 }
